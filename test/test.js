@@ -16,19 +16,19 @@ window.onload = () => {
   text.innerHTML = JSON.stringify(fullTextAnnotation, null, 2);
   console.log(fullTextAnnotation);
 
-  drawFullTextAnnotation(fullTextAnnotation, ctx);
+  drawFullTextAnnotationByWord(fullTextAnnotation, ctx);
 
-  const texts = extractText(fullTextAnnotation);
-
-  // translate(texts[3])
-  // .then(translatedText => console.log(translatedText));
+  const fontSize = getFontSize(fullTextAnnotation.pages[0].blocks[3].paragraphs[0]);
+  console.log(fontSize);
+  //const translatedText = '좋아, 내가 말할거야! 우리가 알아 냈어, 케이드. 자, 어땠 니?';
 };
 
-function extractText(fullTextAnnotation) {
+
+function extractParagraphs(fullTextAnnotation) {
   // pages => blocks => paragraphs => words => symbols => text
   // block 단위로 끊기
   const { pages } = fullTextAnnotation;
-  const texts = [];
+  const paragraphs = [];
   pages.forEach(page =>
     page.blocks.forEach(block =>
       block.paragraphs.forEach((paragraph) => {
@@ -38,16 +38,27 @@ function extractText(fullTextAnnotation) {
             text += symbol.text)
           text += ' ';
         });
-        console.log(text);
-        texts.push(text);
+        paragraphs.push({
+          vertices: paragraph.boundingBox.vertices,
+          text,
+        });
       })));
-  return texts;
+  return paragraphs;
 }
 
-function drawFullTextAnnotation(fullTextAnnotation, ctx) {
+function drawFullTextAnnotationByBlock(fullTextAnnotation, ctx) {
   const { pages } = fullTextAnnotation;
   pages.forEach(page =>
     page.blocks.forEach(block => drawPoly(block.boundingBox.vertices, ctx)));
+}
+function drawFullTextAnnotationByWord(fullTextAnnotation, ctx) {
+  const { pages } = fullTextAnnotation;
+  pages.forEach(page =>
+    page.blocks.forEach(block =>
+      block.paragraphs.forEach(paragraph =>
+        paragraph.words.forEach(word =>
+          word.symbols.forEach(symbol =>
+            drawPoly(symbol.boundingBox.vertices, ctx))))));
 }
 
 function drawPoly(vertices, ctx) {
